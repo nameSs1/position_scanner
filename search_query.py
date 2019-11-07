@@ -13,6 +13,10 @@ class Query:
     def __dict__(self):
         return {slot: getattr(self, slot) for slot in self.__slots__}
 
+    def set_result(self, **kwargs):
+        for attr in kwargs:
+            setattr(self, attr, kwargs.get(attr))
+
 
 class QueryList:
 
