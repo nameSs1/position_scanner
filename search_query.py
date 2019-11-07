@@ -1,6 +1,3 @@
-"""
-описывает класс Поисковый запрос
-"""
 import json
 from datetime import datetime
 
@@ -35,25 +32,20 @@ class QueryList:
         queries, url_promoted, site = [], '', ''
         for string in self._read_txt(file):
             if string.startswith('##'):
-                site = string.lstrip('##').rstrip()
+                site = string.lstrip('##')
             elif string.startswith('#'):
-                url_promoted = string.lstrip('#').rstrip()
+                url_promoted = string.lstrip('#')
             else:
-                queries.append(Query(value_query=string.rstrip(), url_promoted=url_promoted, site_promoted=site))
+                queries.append(Query(value_query=string, url_promoted=url_promoted, site_promoted=site))
         return queries
 
     @staticmethod
     def _read_txt(file):
         with open(file, 'r', encoding='utf-8') as read_file:
-            return read_file.readlines()
+            return map(lambda line: line.rstrip(), read_file.readlines())
 
     def _get_queries_from_json(self, file):
-        queries = []
-        for element in self._read_json(file).get('queries'):
-            queries.append(Query())
-            for attr in element:
-                setattr(queries[-1], attr, element.get(attr))
-        return [Query() for el in self._read_json(file).get('queries') for attr in el]
+        return [Query(**query) for query in self._read_json(file).get('queries')]
 
     @staticmethod
     def _read_json(file):
