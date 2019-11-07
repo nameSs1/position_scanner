@@ -6,22 +6,15 @@ from datetime import datetime
 
 
 class Query:
-    query_id = 0  # id запроса
+    __slots__ = ('value_query', 'site_promoted', 'url_promoted',
+                 'url_result_google', 'url_result_yandex', 'position_google', 'position_yandex', )
 
     def __init__(self, **kwargs):
-        self.value_query = kwargs.get('value_query')  # Значение запросов
-        self.url_promoted = kwargs.get('url_promoted')  # продвигаемая страница
-        self.url_result_google = kwargs.get('url_result_google')  # URL ответа google
-        self.url_result_yandex = kwargs.get('url_result_yandex')  # URL ответа yandex
-        self.position_google = kwargs.get('position_google')  # позиция в google
-        self.position_yandex = kwargs.get('position_yandex')  # позиция в yandex
-        self.site_promoted = kwargs.get('site_promoted')  # продвигаемый сайт
-        self.id = Query.query_id  # id запроса
-        Query.query_id += 1
+        for slot in self.__slots__:
+            setattr(self, slot, kwargs.get(slot))
 
-    def get_dict(self):
-        dict_attrs = vars(self)
-        return {dict_attrs.pop('query_id'): dict_attrs}
+    def __dict__(self):
+        return {slot: getattr(self, slot) for slot in self.__slots__}
 
 
 class QueryList:
@@ -34,14 +27,9 @@ class QueryList:
 
     def _get_queries_from_file(self, file):
         if file.endswith('.json'):
-            return self._read_json(file)
+            return self._get_queries_from_json(file)
         else:
             return self._get_queries_from_txt(file)
-
-    @staticmethod
-    def _read_txt(file):
-        with open(file, 'r', encoding='utf8') as read_file:
-            return read_file.readlines()
 
     def _get_queries_from_txt(self, file):
         queries, url_promoted, site = [], '', ''
@@ -55,9 +43,9 @@ class QueryList:
         return queries
 
     @staticmethod
-    def _read_json(file):
-        with open(file, 'r', encoding='utf8') as read_file:
-            return json.loads(read_file.read())
+    def _read_txt(file):
+        with open(file, 'r', encoding='utf-8') as read_file:
+            return read_file.readlines()
 
     def _get_queries_from_json(self, file):
         queries = []
@@ -65,10 +53,15 @@ class QueryList:
             queries.append(Query())
             for attr in element:
                 setattr(queries[-1], attr, element.get(attr))
-        return queries
+        return [Query() for el in self._read_json(file).get('queries') for attr in el]
+
+    @staticmethod
+    def _read_json(file):
+        with open(file, 'r', encoding='utf8') as read_file:
+            return json.loads(read_file.read())
 
     def create_json(self):
         file_name = f'positions_{datetime.now(tz=None):%d_%B_%Y_%H:%M}.json'
-        queries = [vars(query) for query in self.queries]
+        queries = [query.__dict__() for query in self.queries]
         with open(file_name, 'w', encoding='utf-8')as write_file:
             json.dump({'queries': queries}, write_file, sort_keys=False, indent=4, ensure_ascii=False)
