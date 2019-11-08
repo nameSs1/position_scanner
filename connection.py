@@ -32,3 +32,9 @@ class Connection:
         writer.close()
         await writer.wait_closed()
         await asyncio.sleep(1)
+
+    @classmethod
+    def get_ports(cls, file='ports'):
+        with open(file, 'r', encoding='utf-8') as file:
+            ports = file.readlines()
+        return list(map(lambda p: tuple(map(lambda i: int(i), (p.split()))), ports))
